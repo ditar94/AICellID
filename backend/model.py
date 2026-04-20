@@ -1,17 +1,47 @@
+from pathlib import Path
+
+import torch
 from PIL import Image
+from torch import nn
+from torchvision import models, transforms
 
-# Placeholder until a trained model is wired up.
-# Replace with: load checkpoint, run torchvision transforms, return argmax + softmax score.
+CHECKPOINT_PATH = Path(__file__).parent / "models" / "cell_classifier.pt"
 
-CLASSES = [
-    "neutrophil",
-    "lymphocyte",
-    "monocyte",
-    "eosinophil",
-    "basophil",
-    "blast",
-]
+_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+_model: nn.Module | None = None
+_classes: list[str] | None = None
+
+
+def _load() -> tuple[nn.Module, list[str]] | tuple[None, None]:
+    global _model, _classes
+    if _model is not None:
+        return _model, _classes
+    if not CHECKPOINT_PATH.exists():
+        return None, None
+
+    ckpt = torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=False)
+    classes = ckpt["classes"]
+    model = models.resnet18(weights=None)
+    model.fc = nn.Linear(model.fc.in_features, len(classes))
+    model.load_state_dict(ckpt["state_dict"])
+    model.eval()
+
+    _model, _classes = model, classes
+    return model, classes
 
 
 def classify_image(image: Image.Image) -> tuple[str, float]:
-    return ("lymphocyte", 0.0)
+    model, classes = _load()
+    if model is None:
+        return ("unknown (no model loaded)", 0.0)
+
+    x = _transform(image).unsqueeze(0)
+    with torch.no_grad():
+        probs = torch.softmax(model(x), dim=1)[0]
+    idx = int(probs.argmax())
+    return (classes[idx], float(probs[idx]))
