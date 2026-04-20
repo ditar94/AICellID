@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List, Optional, Tuple
 
 import torch
 from PIL import Image
@@ -13,11 +14,11 @@ _transform = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
 
-_model: nn.Module | None = None
-_classes: list[str] | None = None
+_model: Optional[nn.Module] = None
+_classes: Optional[List[str]] = None
 
 
-def _load() -> tuple[nn.Module, list[str]] | tuple[None, None]:
+def _load() -> Tuple[Optional[nn.Module], Optional[List[str]]]:
     global _model, _classes
     if _model is not None:
         return _model, _classes
@@ -35,7 +36,7 @@ def _load() -> tuple[nn.Module, list[str]] | tuple[None, None]:
     return model, classes
 
 
-def classify_image(image: Image.Image) -> tuple[str, float]:
+def classify_image(image: Image.Image) -> Tuple[str, float]:
     model, classes = _load()
     if model is None:
         return ("unknown (no model loaded)", 0.0)
