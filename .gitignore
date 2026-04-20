@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ML artifacts
+*.pt
+*.pth
+*.onnx
+*.ckpt
+models/
+
+# Datasets (too big for git)
+data/raw/
+data/processed/
+*.zip
+*.tar.gz
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+
+# Frontend (when we add Node later)
+node_modules/
+dist/
+.next/

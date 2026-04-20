@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AICellID</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; }
+      h1 { margin-bottom: 0.25rem; }
+      .sub { color: #666; margin-top: 0; }
+      .drop { border: 2px dashed #aaa; border-radius: 8px; padding: 2rem; text-align: center; margin: 1.5rem 0; }
+      .preview { max-width: 100%; margin-top: 1rem; border-radius: 6px; }
+      .result { padding: 1rem; background: #f5f5f5; border-radius: 6px; margin-top: 1rem; }
+      button { padding: 0.6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h1>AICellID</h1>
+    <p class="sub">Upload a microscopy image to identify the blood cell.</p>
+
+    <div class="drop">
+      <input type="file" id="file" accept="image/*" />
+      <div><button id="go">Classify</button></div>
+      <img id="preview" class="preview" hidden />
+    </div>
+
+    <div id="result" class="result" hidden></div>
+
+    <script>
+      const API = "http://localhost:8000/classify";
+      const fileInput = document.getElementById("file");
+      const preview = document.getElementById("preview");
+      const result = document.getElementById("result");
+
+      fileInput.addEventListener("change", () => {
+        const f = fileInput.files[0];
+        if (!f) return;
+        preview.src = URL.createObjectURL(f);
+        preview.hidden = false;
+      });
+
+      document.getElementById("go").addEventListener("click", async () => {
+        const f = fileInput.files[0];
+        if (!f) return;
+        const fd = new FormData();
+        fd.append("file", f);
+        result.hidden = false;
+        result.textContent = "Classifying...";
+        try {
+          const res = await fetch(API, { method: "POST", body: fd });
+          const data = await res.json();
+          result.textContent = `${data.label} (confidence: ${data.confidence.toFixed(2)})`;
+        } catch (e) {
+          result.textContent = `Error: ${e.message}`;
+        }
+      });
+    </script>
+  </body>
+</html>
